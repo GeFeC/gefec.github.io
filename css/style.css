@@ -1,0 +1,126 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #111111;
+  width: 100vw;
+  height: 100vh;
+  font-family: Poppins, sans-serif;
+  color: white;
+}
+
+table {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-collapse: collapse;
+  width: 1200px;
+}
+
+td {
+  border-left: 2px solid black;
+  border-right: 2px solid black;
+  padding: 5px;
+}
+
+td {
+  text-align: center;
+  height: 45px;
+  width: 200px;
+}
+
+.tr-header {
+  height: 50px;
+  font-size: 20px;
+}
+
+table .header {
+  font-weight: 700;
+  width: 150px;
+  background-color: #444;
+}
+
+.time {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.time1 {
+  background-color: #333;
+}
+
+.time2 {
+  background-color: #444;
+}
+
+.tr1 {
+  background-color: #111;
+}
+
+.tr2 {
+  background-color: #222;
+}
+
+table {
+  border: 3px solid white !important;
+}
+
+.place {
+  font-size: 14px;
+  color: #ddd;
+}
+
+.name {
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.place {
+  font-weight: 400;
+}
+
+.time {
+  width: 100px;
+}
+
+@media screen and (max-width: 1200px) {
+  .row5 {
+    display: none;
+  }
+  table {
+    width: 1000px;
+  }
+}
+@media screen and (max-width: 1000px) {
+  .row4 {
+    display: none;
+  }
+  table {
+    width: 800px;
+  }
+}
+@media screen and (max-width: 800px) {
+  .row3 {
+    display: none;
+  }
+  table {
+    width: 600px;
+  }
+}
+@media screen and (max-width: 600px) {
+  .row2 {
+    display: none;
+  }
+  table {
+    width: 400px;
+  }
+}
+@media screen and (max-width: 400px) {
+  table {
+    width: 90vw;
+  }
+  .time {
+    font-size: 12px;
+  }
+}/*# sourceMappingURL=style.css.map */
