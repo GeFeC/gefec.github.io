@@ -1,0 +1,10 @@
+const KIELCE_POSITION = [50.871667, 20.631389];
+const CELL_SIZE_IN_METERS = 500;
+const MAP_CELLS = 30;
+const DEFAULT_ZOOM = 12;
+const DEFAULT_LOCATIONS_SIZE = 200;
+
+const ONE_GEO_DEGREE_TO_METERS = 111000;
+
+const X = 0;
+const Y = 1;
