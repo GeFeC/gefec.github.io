@@ -8,3 +8,6 @@ const ONE_GEO_DEGREE_TO_METERS = 111000;
 
 const X = 0;
 const Y = 1;
+
+const H3_RESOLUTION = 9;
+const H3_RADIUS = 32;

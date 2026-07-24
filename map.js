@@ -11,6 +11,8 @@ window.MapComponent = function MapComponent(props){
   const bgs_group_ref = useRef(null);
   const static_canvas_ref = useRef(null);
 
+  const hex_data_ref = useRef({});
+
   const pois_ref = useRef(null);
   const infs_ref = useRef(null);
   const bgs_ref = useRef(null);
@@ -20,22 +22,6 @@ window.MapComponent = function MapComponent(props){
     height: '100vh',
     borderRadius: '8px'
   };
-
-  const CellData = {
-    weight: 0,
-    pois: [],
-    t: [],
-    T: 0,
-    infs: [],
-    i: [],
-    I: 0,
-    bgs: [],
-    b: [],
-    B: 0 
-  };
-
-  const grid_ref = useRef(matrix(MAP_CELLS, MAP_CELLS, null));
-  const cells_data_ref = useRef(matrix(MAP_CELLS, MAP_CELLS, CellData));
 
   const free_locations_opacity_ref = useRef({
     pois: null,
@@ -54,36 +40,6 @@ window.MapComponent = function MapComponent(props){
     ]
   }
 
-  const get_drawing_starting_point = () => {
-    return get_square_bounds_around(
-      KIELCE_POSITION[0], 
-      KIELCE_POSITION[1], 
-      MAP_CELLS * CELL_SIZE_IN_METERS - CELL_SIZE_IN_METERS / 2
-    )[0];
-  } 
-
-  const geo_move = (geo, vector) => {
-    const LAT = 0;
-    const LON = 1;
-
-    const lat_delta = vector[Y] / ONE_GEO_DEGREE_TO_METERS;
-    const lon_delta = vector[X] / (ONE_GEO_DEGREE_TO_METERS * Math.cos(radians(geo[LAT])))
-
-    return [geo[LAT] + lat_delta, geo[LON] + lon_delta];
-  }
-
-  const draw_rect = (group, bounds, color) => {
-    return L.rectangle(bounds, {
-      renderer: static_canvas_ref.current,
-      color: color,
-      weight: 2,
-      fillColor: color,
-      fillOpacity: 0.4,
-      opacity: 0,
-      interactive: true
-    }).addTo(group);
-  }
-
   const draw_free_location_rect = (group, opacity, name, bounds, color) => {
     const rect = L.rectangle(bounds, {
       renderer: static_canvas_ref.current,
@@ -95,115 +51,60 @@ window.MapComponent = function MapComponent(props){
     }).addTo(group).bindPopup(name);
   }
 
-  const draw_line = (p1, p2, color) => {
-    L.polyline([p1, p2], {
-      color: color,
-      weight: 3,
-      opacity: 1.0
-    }).addTo(map_ref.current);
-  }
-
-  const get_locations_and_corresponding_indices = (starting_point, locations) => {
-    const result = []
-
-    locations.forEach(p => {
-      const { lat, lon } = p
-
-      const [x, y] = get_move_vector(starting_point, [lat, lon]);
-
-      const x_idx = parseInt(Math.round(x / CELL_SIZE_IN_METERS));
-      const y_idx = -parseInt(Math.round(y / CELL_SIZE_IN_METERS));
-
-      if (x_idx < 0 || x_idx >= MAP_CELLS || y_idx < 0 || y_idx >= MAP_CELLS){
-        if (!too_small_grid_alert_shown){
-          alert("Ostrzezenie! Przynajmniej jeden obiekt nie miesci sie w siatce! Nalezy powiekszyc siatke!");
-          too_small_grid_alert_shown = true;
-        }
-
-        return;
-      }
-
-      result.push([x_idx, y_idx, p])
-    })
-
-    return result
-  }
-
   const update_grid = () => {
-    const starting_point = get_drawing_starting_point();
+    for (let hex_idx in hex_data_ref.current){
+      const hex = hex_data_ref.current[hex_idx];
+      hex.t = [];
+      hex.i = [];
+      hex.b = [];
 
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
-        const cell = cells_data_ref.current[x][y];
-        cell.t = [];
-        cell.i = [];
-        cell.b = [];
-      }
+      const hex_neighbours = h3.gridDisk(hex_idx, hex.center_position, 1);
+      hex_neighbours.forEach(hex_idx => {
+        const hex = hex_data_ref.current[hex_idx];
+
+        if (hex == null) return;
+
+        hex.t = [...hex.t, ...get_influence_series(hex.pois, hex.center_position, params)];
+        hex.i = [...hex.i, ...get_influence_series(hex.infs, hex.center_position, params)];
+        hex.b = [...hex.b, ...get_influence_series(hex.bgs, hex.center_position, params)];
+      })
     }
 
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
-        const center_pos = geo_move(starting_point, [x * CELL_SIZE_IN_METERS, y * CELL_SIZE_IN_METERS]);
+    const signals = {};
 
-        const surrounding_cells = (() => {
-          const result = []
+    for (let hex_idx in hex_data_ref.current){
+      const hex = hex_data_ref.current[hex_idx];
 
-          for (let i = -1; i <= 1; ++i){
-            for (let j = -1; j <= 1; ++j){
-              if (x + i < 0 || x + i >= MAP_CELLS) continue;
-              if (y + j < 0 || y + j >= MAP_CELLS) continue;
+      hex.T = get_accumulated_influence(hex.t);
+      hex.I = get_accumulated_influence(hex.i);
+      hex.B = get_accumulated_influence(hex.b);
 
-              result.push(cells_data_ref.current[x + i][y + j]);
-            }
-          }
-
-          return result;
-        })()
-
-        surrounding_cells.forEach(cell => {
-          cell.t = [...cell.t, ...get_influence_series(cell.pois, center_pos, params)];
-          cell.i = [...cell.i, ...get_influence_series(cell.infs, center_pos, params)];
-          cell.b = [...cell.b, ...get_influence_series(cell.bgs, center_pos, params)];
-        })
-      }
+      signals[hex_idx] = get_signal(hex, params);
     }
 
-    const signals = []
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
-        const cell = cells_data_ref.current[x][y];
+    const max_signal = Math.max(...Object.values(signals))
 
-        cell.T = get_accumulated_influence(cell.t);
-        cell.I = get_accumulated_influence(cell.i);
-        cell.B = get_accumulated_influence(cell.b);
+    for (let hex_idx in hex_data_ref.current){
+      const hex = hex_data_ref.current[hex_idx];
 
-        signals.push(get_signal(cell, params));
+      if (params.use_log_compression){
+        signals[hex_idx] = log_compression(signals[hex_idx], max_signal);
       }
-    }
 
-    const max_signal = Math.max(...signals)
-
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
-        let signal = signals[y * MAP_CELLS + x];
-
-        if (params.use_log_compression){
-          signal = log_compression(signal, max_signal);
-        }
-
-        grid_ref.current[x][y].setStyle({
-          fillColor: map_to_color(signal)
-        }).bindPopup(`Sygnał: ${signal}`);
-      }
+      const signal = signals[hex_idx];
+      hex.drawable.setStyle({
+        fillColor: map_to_color(signal)
+      }).bindPopup(`Sygnał: ${signal}`);
     }
   }
 
   useEffect(() => {
-    if (!grid_ref.current[0][0]) return;
+    if ([...Object.values(hex_data_ref.current)].length == 0) return;
 
     update_grid();
   }, [params])
 
+  //INIT
   useEffect(() => {
     const map = L.map('map', {
       preferCanvas: true
@@ -232,14 +133,46 @@ window.MapComponent = function MapComponent(props){
       bgs: free_bgs_checked
     }
 
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
-        const starting_point = get_drawing_starting_point();
-        const center_pos = geo_move(starting_point, [x * CELL_SIZE_IN_METERS, y * CELL_SIZE_IN_METERS]);
+    const h3_center = h3.latLngToCell(
+      KIELCE_POSITION[X],
+      KIELCE_POSITION[Y],
+      H3_RESOLUTION
+    );
 
-        grid_ref.current[x][y] = draw_rect(grid_group, get_square_bounds_around(center_pos[X], center_pos[Y], CELL_SIZE_IN_METERS), "rgb(0,0,255)");
-      }
-    }
+    const h3_indices = h3.gridDisk(h3_center, H3_RADIUS);
+
+    h3_indices.map(hex => {
+      const boundary = h3.cellToBoundary(hex);
+      const polygon = L.polygon(boundary, {
+        renderer: static_canvas,
+        interactive: true,
+        color: '#3b82f6',
+        fillColor: '#93c5fd',
+        fillOpacity: 0.4,
+        weight: 1
+      });
+
+      hex_data_ref.current[hex] = {
+        drawable: polygon,
+        T: 0,
+        I: 0,
+        B: 0,
+        t: [],
+        i: [],
+        b: [],
+        pois: [],
+        infs: [],
+        bgs: [],
+        weight: 0,
+        center_position: h3.cellToLatLng(hex)
+      };
+    });
+
+    grid_group_ref.current = L.featureGroup().addTo(map);
+
+    Object.entries(hex_data_ref.current).map(([hexId, data]) => {
+      data.drawable.addTo(grid_group_ref.current);
+    })
 
     map_ref.current.on("zoomend", function() {
       if (bgs_ref.current == null) return;
@@ -250,11 +183,10 @@ window.MapComponent = function MapComponent(props){
 
       grid_group_ref.current.clearLayers();
 
+      for (let hex_idx in hex_data_ref.current){
+        const hex = hex_data_ref.current[hex_idx];
 
-      for (let y = 0; y < MAP_CELLS; ++y){
-        for (let x = 0; x < MAP_CELLS; ++x){
-          grid_ref.current[x][y].addTo(grid_group_ref.current);
-        }
+        hex.drawable.addTo(grid_group_ref.current); 
       }
 
       const zoom = map_ref.current.getZoom();
@@ -294,18 +226,25 @@ window.MapComponent = function MapComponent(props){
     infs_ref.current = inf;
     bgs_ref.current = bg;
 
-    const starting_point = get_drawing_starting_point();
-
-    get_locations_and_corresponding_indices(starting_point, poi).forEach(([x_idx, y_idx, poi]) => {
-      cells_data_ref.current[x_idx][y_idx].pois.push(poi);
+    poi.forEach(p => {
+      const hex_index = h3.latLngToCell(p.lat, p.lon, H3_RESOLUTION);
+      const cell = hex_data_ref.current[hex_index];
+      if (cell == null) return;
+      cell.pois.push(p);
     })
 
-    get_locations_and_corresponding_indices(starting_point, inf).forEach(([x_idx, y_idx, inf]) => {
-      cells_data_ref.current[x_idx][y_idx].infs.push(inf);
+    inf.forEach(p => {
+      const hex_index = h3.latLngToCell(p.lat, p.lon, H3_RESOLUTION);
+      const cell = hex_data_ref.current[hex_index];
+      if (cell == null) return;
+      cell.infs.push(p);
     })
 
-    get_locations_and_corresponding_indices(starting_point, bg).forEach(([x_idx, y_idx, bg]) => {
-      cells_data_ref.current[x_idx][y_idx].bgs.push(bg);
+    bg.forEach(p => {
+      const hex_index = h3.latLngToCell(p.lat, p.lon, H3_RESOLUTION);
+      const cell = hex_data_ref.current[hex_index];
+      if (cell == null) return;
+      cell.bgs.push(p);
     })
 
     draw_all_free_locations(DEFAULT_LOCATIONS_SIZE);
