@@ -72,18 +72,20 @@ window.MapComponent = function MapComponent(props){
     return [geo[LAT] + lat_delta, geo[LON] + lon_delta];
   }
 
-  const draw_rect = (group, name, bounds, color) => {
+  const draw_rect = (group, bounds, color) => {
     return L.rectangle(bounds, {
+      renderer: static_canvas_ref.current,
       color: color,
       weight: 2,
       fillColor: color,
       fillOpacity: 0.4,
-      opacity: 0
-    }).addTo(group).bindPopup(name);
+      opacity: 0,
+      interactive: true
+    }).addTo(group);
   }
 
   const draw_free_location_rect = (group, opacity, name, bounds, color) => {
-    return L.rectangle(bounds, {
+    const rect = L.rectangle(bounds, {
       renderer: static_canvas_ref.current,
       color: color,
       weight: 2,
@@ -127,7 +129,7 @@ window.MapComponent = function MapComponent(props){
     return result
   }
 
-  const draw_grid = () => {
+  const update_grid = () => {
     const starting_point = get_drawing_starting_point();
 
     for (let y = 0; y < MAP_CELLS; ++y){
@@ -166,7 +168,6 @@ window.MapComponent = function MapComponent(props){
       }
     }
 
-    console.log("DZIALA")
     const signals = []
     for (let y = 0; y < MAP_CELLS; ++y){
       for (let x = 0; x < MAP_CELLS; ++x){
@@ -192,7 +193,7 @@ window.MapComponent = function MapComponent(props){
 
         grid_ref.current[x][y].setStyle({
           fillColor: map_to_color(signal)
-        });
+        }).bindPopup(`Sygnał: ${signal}`);
       }
     }
   }
@@ -200,7 +201,7 @@ window.MapComponent = function MapComponent(props){
   useEffect(() => {
     if (!grid_ref.current[0][0]) return;
 
-    draw_grid();
+    update_grid();
   }, [params])
 
   useEffect(() => {
@@ -236,17 +237,27 @@ window.MapComponent = function MapComponent(props){
         const starting_point = get_drawing_starting_point();
         const center_pos = geo_move(starting_point, [x * CELL_SIZE_IN_METERS, y * CELL_SIZE_IN_METERS]);
 
-        grid_ref.current[x][y] = draw_rect(grid_group, `x: ${x}, y: ${y}`, get_square_bounds_around(center_pos[X], center_pos[Y], CELL_SIZE_IN_METERS), "rgb(0,0,255)");
+        grid_ref.current[x][y] = draw_rect(grid_group, get_square_bounds_around(center_pos[X], center_pos[Y], CELL_SIZE_IN_METERS), "rgb(0,0,255)");
       }
     }
 
     map_ref.current.on("zoomend", function() {
+      if (bgs_ref.current == null) return;
+
       pois_group_ref.current.clearLayers();
       infs_group_ref.current.clearLayers();
       bgs_group_ref.current.clearLayers();
 
+      grid_group_ref.current.clearLayers();
+
+
+      for (let y = 0; y < MAP_CELLS; ++y){
+        for (let x = 0; x < MAP_CELLS; ++x){
+          grid_ref.current[x][y].addTo(grid_group_ref.current);
+        }
+      }
+
       const zoom = map_ref.current.getZoom();
-      console.log("zoom: ", zoom);
 
       const new_size = DEFAULT_LOCATIONS_SIZE / Math.pow(2, zoom - DEFAULT_ZOOM);
       draw_all_free_locations(new_size);
@@ -260,7 +271,7 @@ window.MapComponent = function MapComponent(props){
       return (p) => {
         const { lat, lon } = p;
         const weight = choose_not_null([p.WAGA, p.Weight]);
-        draw_free_location_rect(group.current, opacity, `${weight}`, get_square_bounds_around(lat, lon, size), color);
+        draw_free_location_rect(group.current, opacity, `Waga: ${weight}`, get_square_bounds_around(lat, lon, size), color);
       }
     }
 
@@ -299,13 +310,11 @@ window.MapComponent = function MapComponent(props){
 
     draw_all_free_locations(DEFAULT_LOCATIONS_SIZE);
 
-    console.log("UPDATE")
-
     pois_group_ref.current.setStyle({ fillOpacity: 0 });
     infs_group_ref.current.setStyle({ fillOpacity: 0 });
     bgs_group_ref.current.setStyle({ fillOpacity: 0 });
 
-    draw_grid();
+    update_grid();
   }, [grid_data])
 
 

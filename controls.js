@@ -121,6 +121,7 @@ window.Controls = function Controls(props){
             <Slider 
               name="β"
               value={ params.beta }
+              max={ 10 }
               on_change={ props.on_beta_slider_change }
             />
 
