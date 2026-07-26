@@ -74,24 +74,6 @@ const choose_not_null = (candidates) => {
   return candidates.find(e => !is_null(e))
 }
 
-const get_influence_series = (locations, cell_center_pos, params) => {
-  const t = [];
-
-  locations.forEach((p) => {
-    const d_vec = get_move_vector(cell_center_pos, [p.lat, p.lon]);
-    const d = Math.sqrt(d_vec[X] * d_vec[X] + d_vec[Y] * d_vec[Y]);
-
-    if (d >= 2 * params.s) return;
-
-    const weight = choose_not_null([p.Weight, p.WAGA]);
-
-    t.push(influence(d, weight, params));
-
-  })
-
-  return t
-}
-
 const get_accumulated_influence = (series) => {
   let product = 1;
 
@@ -136,6 +118,12 @@ const DIT = (cell, params) => {
   const { B } = cell;
 
   return (inc + rho * K) / (inc + beta * B + K - beta * B * K)
+}
+
+const schlick = (value, x, y) => {
+  const k = (x * (1 - y)) / (y * (1 - x));
+
+  return value / (k + (1 - k) * value);
 }
 
 let INC = INC_weight_mean;

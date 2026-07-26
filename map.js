@@ -17,6 +17,8 @@ window.MapComponent = function MapComponent(props){
   const infs_ref = useRef(null);
   const bgs_ref = useRef(null);
 
+  const free_locations_ref = useRef([]);
+
   const map_style = {
     width: '100vw',
     height: '100vh',
@@ -49,6 +51,8 @@ window.MapComponent = function MapComponent(props){
       fillOpacity: opacity,
       opacity: 0
     }).addTo(group).bindPopup(name);
+
+    return rect;
   }
 
   const update_grid = () => {
@@ -177,9 +181,6 @@ window.MapComponent = function MapComponent(props){
     map_ref.current.on("zoomend", function() {
       if (bgs_ref.current == null) return;
 
-      pois_group_ref.current.clearLayers();
-      infs_group_ref.current.clearLayers();
-      bgs_group_ref.current.clearLayers();
 
       grid_group_ref.current.clearLayers();
 
@@ -191,19 +192,65 @@ window.MapComponent = function MapComponent(props){
 
       const zoom = map_ref.current.getZoom();
 
+      free_locations_ref.current = [];
+      pois_group_ref.current.clearLayers();
+      infs_group_ref.current.clearLayers();
+      bgs_group_ref.current.clearLayers();
       const new_size = DEFAULT_LOCATIONS_SIZE / Math.pow(2, zoom - DEFAULT_ZOOM);
+
+      current_zoom.current = new_size;
       draw_all_free_locations(new_size);
     })
   }, [])
 
   const { free_pois_checked, free_infs_checked, free_bgs_checked } = props;
 
+  const get_weight = location => {
+    const weight = choose_not_null([location.Weight, location.WAGA]);
+
+    if (params.weight_scale_method == "schlick"){
+      const schlick_x = params.weight_schlick;
+      return schlick(weight, 1 - schlick_x, schlick_x);
+    }
+    else return Math.min(1, weight * params.weight_linear);
+  }
+
+  const get_influence_series = (locations, cell_center_pos, params) => {
+    const t = [];
+
+    locations.forEach((p) => {
+      const d_vec = get_move_vector(cell_center_pos, [p.lat, p.lon]);
+      const d = Math.sqrt(d_vec[X] * d_vec[X] + d_vec[Y] * d_vec[Y]);
+
+      if (d >= 2 * params.s) return;
+
+      t.push(influence(d, get_weight(p), params));
+
+    })
+
+    return t
+  }
+
+  const current_zoom = useRef(DEFAULT_ZOOM);
+
   const draw_all_free_locations = (size) => {
     const draw_locations = (group, color, opacity) => {
       return (p) => {
         const { lat, lon } = p;
-        const weight = choose_not_null([p.WAGA, p.Weight]);
-        draw_free_location_rect(group.current, opacity, `Waga: ${weight}`, get_square_bounds_around(lat, lon, size), color);
+        const weight = get_weight(p);
+
+        const drawable = draw_free_location_rect(
+          group.current, 
+          opacity, 
+          `Waga: ${weight}`, 
+          get_square_bounds_around(lat, lon, size), 
+          color
+        );
+
+        free_locations_ref.current.push({
+          drawable: drawable,
+          data: p
+        });
       }
     }
 
@@ -212,6 +259,13 @@ window.MapComponent = function MapComponent(props){
     infs_ref.current.forEach(draw_locations(infs_group_ref, "#ffffff", inf ? 1 : 0));
     pois_ref.current.forEach(draw_locations(pois_group_ref, "#000000", poi ? 1 : 0));
   }
+
+  useEffect(() => {
+    free_locations_ref.current.forEach(({ drawable, data }) => {
+      drawable.bindPopup(`Waga: ${get_weight(data)}`)
+    })  
+    console.log("UPDATE")
+  }, [params.weight_schlick, params.weight_linear, params.weight_scale_method])
 
   useEffect(() => {
     if (!grid_data) return;

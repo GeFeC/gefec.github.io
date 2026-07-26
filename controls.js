@@ -228,7 +228,48 @@ window.Controls = function Controls(props){
 
         <hr/>
 
+        <h4 style={h_style}>
+          Skaluj wagi:
+        </h4>
 
+        <SelectList
+          options={[
+            {
+              name: "Skalowanie liniowe",
+              key: "linear"
+            },
+            {
+              name: "Funkcja Schlicka",
+              key: "schlick"
+            },
+          ]}
+          on_change = { props.on_weight_scale_method_change }
+        />
+
+        {
+          params.weight_scale_method == "schlick" ?
+            (<div>
+              <Slider 
+                key="option-a"
+                name="Punkt (x,1-x) "
+                value={ params.weight_schlick }
+                step={0.01}
+                on_change={ props.on_weight_schlick_change }
+              />
+            </div>) :
+            (<div>
+              <Slider 
+                key="option-b"
+                name="Mnożnik"
+                min={ 0 }
+                max={ 10 }
+                value={ params.weight_linear }
+                on_change={ props.on_weight_linear_change }
+              />
+            </div>)
+        }
+
+        <hr/>
 
         <span style={ { fontWeight: 700 } }>
           <Slider 

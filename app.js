@@ -15,7 +15,10 @@ window.App = function App(){
     beta: 0.5,
     rho: 0.05,
     K: 0.5,
-    use_log_compression: true
+    use_log_compression: true,
+    weight_schlick: 0.5,
+    weight_linear: 1,
+    weight_scale_method: "linear"
   })
 
   const on_data_loaded = (poi, inf, bg) => {
@@ -147,6 +150,24 @@ window.App = function App(){
     set_params(new_params);
   }
 
+  const on_weight_linear_change = value => {
+    const new_params = structuredClone(params);
+    new_params.weight_linear = value;
+    set_params(new_params);
+  }
+
+  const on_weight_schlick_change = value => {
+    const new_params = structuredClone(params);
+    new_params.weight_schlick = value;
+    set_params(new_params);
+  }
+
+  const on_weight_scale_method_change = value => {
+    const new_params = structuredClone(params);
+    new_params.weight_scale_method = value;
+    set_params(new_params);
+  }
+
   return (
     <div>
       <MapComponent 
@@ -177,6 +198,9 @@ window.App = function App(){
 
         on_range_function_change = { on_range_function_change }
         on_s_multiply_change = { on_s_multiply_change }
+        on_weight_schlick_change = { on_weight_schlick_change }
+        on_weight_linear_change = { on_weight_linear_change }
+        on_weight_scale_method_change = { on_weight_scale_method_change }
       />
     </div>
   );
