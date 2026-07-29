@@ -9,6 +9,8 @@ window.App = function App(){
 
   const [grid_opacity, set_grid_opacity] = useState(0.4);
 
+  const [current_map, set_current_map] = useState(HEX_MAP)
+
   const [params, set_params] = useState({
     s: CELL_SIZE_IN_METERS / 2,
     alpha: [0.5, 0.5],
@@ -168,6 +170,10 @@ window.App = function App(){
     set_params(new_params);
   }
 
+  const on_map_change = value => {
+    set_current_map(!current_map);
+  }
+
   return (
     <div>
       <MapComponent 
@@ -177,6 +183,7 @@ window.App = function App(){
         free_infs_checked = { free_infs_checked }
         free_bgs_checked = { free_bgs_checked }
         params = { params }
+        current_map = { current_map }
       />
 
       <Controls 
@@ -195,12 +202,14 @@ window.App = function App(){
         on_beta_slider_change = { on_beta_slider_change }
         on_rho_slider_change = { on_rho_slider_change }
         on_K_slider_change = { on_K_slider_change }
+        current_map = { current_map }
 
         on_range_function_change = { on_range_function_change }
         on_s_multiply_change = { on_s_multiply_change }
         on_weight_schlick_change = { on_weight_schlick_change }
         on_weight_linear_change = { on_weight_linear_change }
         on_weight_scale_method_change = { on_weight_scale_method_change }
+        on_map_change = { on_map_change }
       />
     </div>
   );

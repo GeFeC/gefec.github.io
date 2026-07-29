@@ -1,3 +1,19 @@
+function HexagonIcon(){
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-hexagon" viewBox="0 0 16 16">
+  <path d="M14 4.577v6.846L8 15l-6-3.577V4.577L8 1zM8.5.134a1 1 0 0 0-1 0l-6 3.577a1 1 0 0 0-.5.866v6.846a1 1 0 0 0 .5.866l6 3.577a1 1 0 0 0 1 0l6-3.577a1 1 0 0 0 .5-.866V4.577a1 1 0 0 0-.5-.866z"/>
+</svg>
+  )
+}
+
+function SquareIcon(){
+  return (
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-square" viewBox="0 0 16 16">
+  <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+</svg>
+  )
+}
+
 window.Controls = function Controls(props){
   const Checkbox = window.Checkbox;
   const Slider = window.Slider;
@@ -20,7 +36,9 @@ window.Controls = function Controls(props){
     background: 'white',
     boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
     zIndex: 1000,
-    width: '400px'
+    width: 'min(calc(100vw - 20px), 400px)',
+    maxHeight: '50vh',
+    overflowX: 'scroll'
   };
 
   const read_file = e => {
@@ -64,11 +82,35 @@ window.Controls = function Controls(props){
     marginBottom: '5px'
   }
 
+  const checkbox_wrapper_style = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    width: '200px'
+  }
+
+  const button_style = {
+    width: '50px',
+    height: '50px',
+    fontSize: '24px',
+    display: 'inline-flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: '5px'
+  }
+
   return (
     <div style={style}>
       <div>
-        <h3 style={h_style}>Wybierz plik z danymi</h3>
-        <input onChange={read_file} type="file" id="excel-file" accept=".xlsx, .xls" />
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div>
+            <h3 style={h_style}>Wybierz plik z danymi</h3>
+            <input onChange={read_file} type="file" id="excel-file" accept=".xlsx, .xls" />
+          </div>
+
+          <button onClick={ props.on_map_change } style={button_style}>
+            { props.current_map == HEX_MAP ? (<HexagonIcon/>) : (<SquareIcon/>) }
+          </button>
+        </div>
 
         <hr/>
 
@@ -76,9 +118,11 @@ window.Controls = function Controls(props){
           Dokładne położenie obiektów:
         </h4>
 
-        <Checkbox name="POI" on_change={ on_free_pois_change }/>
-        <Checkbox name="INF" on_change={ on_free_infs_change }/>
-        <Checkbox name="BG" on_change={ on_free_bgs_change }/>
+        <div style={checkbox_wrapper_style}>
+          <Checkbox name="POI" on_change={ on_free_pois_change }/>
+          <Checkbox name="INF" on_change={ on_free_infs_change }/>
+          <Checkbox name="BG" on_change={ on_free_bgs_change }/>
+        </div>
 
         <hr/>
 
