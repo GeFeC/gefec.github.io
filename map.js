@@ -45,6 +45,10 @@ window.MapComponent = function MapComponent(props){
 
   const update_grid = () => {
     current_map_ref.current.update_grid(data_ref.current, params);
+    props.update_histogram(
+      current_map_ref.current.get_data_as_1d_array(data_ref.current)
+        .map(e => e.signal)
+    );
   }
 
   useEffect(() => {

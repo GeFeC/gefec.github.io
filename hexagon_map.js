@@ -1,4 +1,7 @@
 const hexagon_map = {
+  get_data_as_1d_array: (data) => {
+    return [...Object.values(data)]
+  },
   update_grid: (hex_data, params) => {
     for (let hex_idx in hex_data){
       const hex = hex_data[hex_idx];
@@ -43,6 +46,7 @@ const hexagon_map = {
       hex.drawable.setStyle({
         fillColor: map_to_color(signal)
       }).bindPopup(`Sygnał: ${signal}`);
+      hex.signal = signal;
     }
   },
   load: (hex_data, poi, inf, bg) => {

@@ -28,7 +28,7 @@ window.Slider = function Slider(props){
   };
 
   return (
-    <div style={style}>
+    <div style={props.style || style}>
       <span>{name} : {val}</span>
 
       <div style={slider_wrapper_style}>

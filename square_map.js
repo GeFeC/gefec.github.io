@@ -44,6 +44,9 @@ if (x_idx < 0 || x_idx >= MAP_CELLS || y_idx < 0 || y_idx >= MAP_CELLS){
 }
 
 const square_map = {
+  get_data_as_1d_array: (data) => {
+    return [].concat.apply([], data);
+  },
   update_grid: (sq_data, params) => {
     const starting_point = get_drawing_starting_point();
 
@@ -109,6 +112,8 @@ const square_map = {
         sq_data[x][y].drawable.setStyle({
           fillColor: map_to_color(signal)
         }).bindPopup(`Sygnał: ${signal}`);
+
+        sq_data[x][y].signal = signal;
       }
     }
   },

@@ -1,11 +1,14 @@
 window.App = function App(){
   const MapComponent = window.MapComponent;
   const Controls = window.Controls;
+  const HistogramControls = window.HistogramControls;
 
   const [grid_data, set_grid_data] = useState(null);
+  const [signals, set_signals] = useState([])
   const [free_pois_checked, set_free_pois_checked] = useState(false);
   const [free_infs_checked, set_free_infs_checked] = useState(false);
   const [free_bgs_checked, set_free_bgs_checked] = useState(false);
+  const [signal_function, set_signal_function] = useState("DIT");
 
   const [grid_opacity, set_grid_opacity] = useState(0.4);
 
@@ -104,18 +107,23 @@ window.App = function App(){
   const on_signal_method_change = (value) => {
     if (value == "dit"){
       get_signal = DIT;
+      set_signal_function("DIT");
     }
     else if (value == "inc"){
       get_signal = INC;
+      set_signal_function("INC");
     }
     else if (value == "pois"){
       get_signal = (cell, params) => cell.T;
+      set_signal_function("POIS");
     }
     else if (value == "infs"){
       get_signal = (cell, params) => cell.I;
+      set_signal_function("INFS");
     }
     else if (value == "bgs"){
       get_signal = (cell, params) => cell.B;
+      set_signal_function("BGS");
     }
 
     const new_params = structuredClone(params);
@@ -174,6 +182,10 @@ window.App = function App(){
     set_current_map(!current_map);
   }
 
+  const update_histogram = data => {
+    set_signals(data);
+  }
+
   return (
     <div>
       <MapComponent 
@@ -184,6 +196,7 @@ window.App = function App(){
         free_bgs_checked = { free_bgs_checked }
         params = { params }
         current_map = { current_map }
+        update_histogram = { update_histogram }
       />
 
       <Controls 
@@ -210,6 +223,11 @@ window.App = function App(){
         on_weight_linear_change = { on_weight_linear_change }
         on_weight_scale_method_change = { on_weight_scale_method_change }
         on_map_change = { on_map_change }
+      />
+
+      <HistogramControls
+        data={signals || []}
+        signal_function={ signal_function }
       />
     </div>
   );

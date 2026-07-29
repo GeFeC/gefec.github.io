@@ -18,6 +18,7 @@ window.Controls = function Controls(props){
   const Checkbox = window.Checkbox;
   const Slider = window.Slider;
   const SelectList = window.SelectList;
+  const Histogram = window.Histogram;
 
   const { on_data_loaded } = props;
 
@@ -28,8 +29,9 @@ window.Controls = function Controls(props){
 
   const style = {
     position: 'absolute',
-    top: '10px',
-    right: '10px',
+    top: '0px',
+    right: '0px',
+    margin: '10px',
     borderRadius: '8px',
     fontFamily: 'sans-serif',
     padding: '10px 15px',
@@ -37,8 +39,9 @@ window.Controls = function Controls(props){
     boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
     zIndex: 1000,
     width: 'min(calc(100vw - 20px), 400px)',
-    maxHeight: '50vh',
-    overflowX: 'scroll'
+    maxHeight: 'calc(50vh - 20px)',
+    overflowX: 'scroll',
+    boxSizing: 'border-box'
   };
 
   const read_file = e => {
@@ -208,6 +211,7 @@ window.Controls = function Controls(props){
             <Slider 
               name="K"
               value={ params.K }
+              min={ 0.05 }
               on_change={ props.on_K_slider_change }
             />
           </div> : ""
