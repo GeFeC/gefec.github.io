@@ -1,6 +1,6 @@
 function HexagonIcon(){
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-hexagon" viewBox="0 0 16 16">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-hexagon" viewBox="0 0 16 16">
   <path d="M14 4.577v6.846L8 15l-6-3.577V4.577L8 1zM8.5.134a1 1 0 0 0-1 0l-6 3.577a1 1 0 0 0-.5.866v6.846a1 1 0 0 0 .5.866l6 3.577a1 1 0 0 0 1 0l6-3.577a1 1 0 0 0 .5-.866V4.577a1 1 0 0 0-.5-.866z"/>
 </svg>
   )
@@ -8,7 +8,7 @@ function HexagonIcon(){
 
 function SquareIcon(){
   return (
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-square" viewBox="0 0 16 16">
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-square" viewBox="0 0 16 16">
   <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
 </svg>
   )
@@ -98,10 +98,40 @@ window.Controls = function Controls(props){
     marginTop: '5px'
   }
 
+  const windowRef = useRef(null);
+
+  useEffect(() => {
+    if (!windowRef.current) return;
+
+    const restrictionModifier = interact.modifiers.restrictRect({
+      restriction: 'window', 
+      endOnly: false
+    });
+
+    interact(windowRef.current)
+      .draggable({
+        allowFrom: '.window-header', 
+        modifiers: [restrictionModifier],
+        listeners: {
+          move(event) {
+            const target = event.target;
+            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+            target.style.transform = `translate(${x}px, ${y}px)`;
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+          }
+        }
+      })
+
+    return () => interactable.unset();
+  }, []);
+
   return (
-    <div style={style}>
+    <div style={style} ref={windowRef}>
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div className="window-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
           <div>
             <h3 style={h_style}>Wybierz plik z danymi</h3>
             <input onChange={read_file} type="file" id="excel-file" accept=".xlsx, .xls" />
