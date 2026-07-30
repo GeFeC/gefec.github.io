@@ -9,6 +9,7 @@ window.App = function App(){
   const [free_infs_checked, set_free_infs_checked] = useState(false);
   const [free_bgs_checked, set_free_bgs_checked] = useState(false);
   const [signal_function, set_signal_function] = useState("DIT");
+  const data_loaded_ref = useRef(false);
 
   const [grid_opacity, set_grid_opacity] = useState(0.4);
 
@@ -17,6 +18,7 @@ window.App = function App(){
   const [params, set_params] = useState({
     s: CELL_SIZE_IN_METERS / 2,
     alpha: [0.5, 0.5],
+    alpha0: 1,
     beta: 0.5,
     rho: 0.05,
     K: 0.5,
@@ -27,11 +29,18 @@ window.App = function App(){
   })
 
   const on_data_loaded = (poi, inf, bg) => {
+    if (data_loaded_ref.current){
+      alert("Dane już są załadowane!")
+      return;
+    }
+
     set_grid_data({
       poi: poi,
       inf: inf,
       bg: bg
     })
+
+    data_loaded_ref.current = true;
   }
   
   const on_free_pois_change = (checked) => {
@@ -59,6 +68,12 @@ window.App = function App(){
   const on_alpha_2_slider_change = (value) => {
     const new_params = structuredClone(params);
     new_params.alpha[1] = value;
+    set_params(new_params);
+  }
+
+  const on_alpha_slider_change = (value) => {
+    const new_params = structuredClone(params);
+    new_params.alpha0 = value;
     set_params(new_params);
   }
 
@@ -208,6 +223,7 @@ window.App = function App(){
         on_opacity_slider_change = { on_opacity_slider_change }
         on_alpha_1_slider_change = { on_alpha_1_slider_change }
         on_alpha_2_slider_change = { on_alpha_2_slider_change }
+        on_alpha_slider_change = { on_alpha_slider_change }
         on_s_slider_change = { on_s_slider_change }
         on_inc_method_change = { on_inc_method_change }
         on_signal_method_change = { on_signal_method_change }

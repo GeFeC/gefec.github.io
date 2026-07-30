@@ -50,7 +50,7 @@ const INC_weight_mean = (cell, params) => {
 const INC_prob_sum = (cell, params) => {
   const { T, I } = cell;
   const F = 0;
-  return 1 - (1 - T) * (1 - I) * (1 - F);
+  return 1 - (1 - T) * (1 - Math.pow(T, params.alpha0) * I) * (1 - F);
 }
 
 const get_move_vector = (starting_point, target) => {
@@ -117,7 +117,8 @@ const DIT = (cell, params) => {
   const { beta, rho, K } = params;
   const { B } = cell;
 
-  return (inc + rho * K) / (inc + beta * B + K - beta * B * K)
+  const K_ = Math.max(K, 1 / 1000);
+  return (inc + rho * K) / (inc + beta * B + K_ - beta * B * K_)
 }
 
 const schlick = (value, x, y) => {

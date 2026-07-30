@@ -211,7 +211,7 @@ window.Controls = function Controls(props){
             <Slider 
               name="K"
               value={ params.K }
-              min={ 0.05 }
+              min={ 0 }
               on_change={ props.on_K_slider_change }
             />
           </div> : ""
@@ -254,18 +254,27 @@ window.Controls = function Controls(props){
               inc_method == "mean" ? (
                 <div>
                   <Slider 
+                    key="alpha_1"
                     name={ <span>α<sub>1</sub></span> }
                     value={ 0.5 }
                     on_change={ on_alpha_1_slider_change }
                   />
 
                   <Slider 
+                    key="alpha_2"
                     name={ <span>α<sub>2</sub></span> }
                     value={ 0.5 }
                     on_change={ on_alpha_2_slider_change }
                   />
                 </div>
-              ) : ""
+              ) : (
+                <Slider 
+                  key="alpha"
+                  name={ <span>α</span> }
+                  value={ params.alpha0 }
+                  on_change={ props.on_alpha_slider_change }
+                />
+              )
             }
             <hr/>
 

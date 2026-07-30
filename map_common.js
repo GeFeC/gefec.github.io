@@ -13,7 +13,7 @@ const get_weight = (location, params) => {
   const weight = choose_not_null([location.Weight, location.WAGA]);
 
   if (params.weight_scale_method == "schlick"){
-    const schlick_x = params.weight_schlick;
+    const schlick_x = Math.min(params.weight_schlick, 0.99);
     return schlick(weight, 1 - schlick_x, schlick_x);
   }
   else return Math.min(1, weight * params.weight_linear);
