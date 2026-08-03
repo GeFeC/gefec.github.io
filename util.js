@@ -90,6 +90,12 @@ const clamp = (value, min, max) => {
 }
 
 const map_to_color = value => {
+  const [r, g, b] = map_to_color_array(value);
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+const map_to_color_array = value => {
   if (value < 0 || value > 1){
     alert("Ostrzezenie! Argument funkcji map_to_color nie powinien byc spoza przedzialu 0..1")
   }
@@ -105,7 +111,11 @@ const map_to_color = value => {
     0.25 - p2
   ];
 
-  return `rgb(${255 * 4 * r}, ${255 * 4 * g}, ${255 * 4 * b})`;
+  return [
+    r * 4 * 255,
+    g * 4 * 255,
+    b * 4 * 255
+  ];
 }
 
 const log_compression = (x, max_x) => {

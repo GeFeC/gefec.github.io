@@ -9,6 +9,7 @@ window.MapComponent = function MapComponent(props){
   const bgs_group_ref = useRef(null);
   const static_canvas_ref = useRef(null);
   const current_map_ref = useRef(hexagon_map);
+  const gl_layer_visible_ref = useRef(false);
 
   const data_ref = useRef({});
 
@@ -44,11 +45,16 @@ window.MapComponent = function MapComponent(props){
   }
 
   const update_grid = () => {
-    current_map_ref.current.update_grid(data_ref.current, params);
+    current_map_ref.current.update_grid(data_ref.current, params, map_ref.current, gl_layer_visible_ref.current);
     props.update_histogram(
       current_map_ref.current.get_data_as_1d_array(data_ref.current)
         .map(e => e.signal)
     );
+
+    const overlay = document.getElementById("deckgl-overlay");
+    if (overlay){
+      overlay.style.opacity = grid_opacity
+    }
   }
 
   useEffect(() => {
@@ -86,8 +92,6 @@ window.MapComponent = function MapComponent(props){
       bgs: free_bgs_checked
     }
 
-    grid_group_ref.current = L.featureGroup().addTo(map);
-
     data_ref.current = current_map_ref.current.init(grid_group_ref.current, static_canvas);
 
     map_ref.current.on("zoomend", function() {
@@ -99,7 +103,9 @@ window.MapComponent = function MapComponent(props){
   const redraw_everything = () => {
     grid_group_ref.current.clearLayers();
 
-    current_map_ref.current.on_zoomend(data_ref.current, grid_group_ref.current);
+    if (gl_layer_visible_ref.current == false){
+      current_map_ref.current.on_zoomend(data_ref.current, grid_group_ref.current);
+    }
 
     const zoom = map_ref.current.getZoom();
 
@@ -225,7 +231,28 @@ window.MapComponent = function MapComponent(props){
     grid_group_ref.current.setStyle({
       fillOpacity: grid_opacity
     })
+
+    const overlay = document.getElementById("deckgl-overlay");
+    if (overlay){
+      overlay.style.opacity = grid_opacity
+    }
   }, [grid_opacity])
+
+  useEffect(() => {
+    if (bgs_ref.current == null) return;
+
+    if (props.gl_layer_enabled){
+      gl_layer_visible_ref.current = true;
+    }
+    else{
+      gl_layer_visible_ref.current = false;
+    }
+
+    redraw_everything();
+    update_grid();
+
+
+  }, [props.gl_layer_enabled])
 
   return (
     <div id="map" style={map_style}>

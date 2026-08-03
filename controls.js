@@ -143,7 +143,16 @@ window.Controls = function Controls(props){
           <button onClick={ props.on_map_change } style={button_style}>
             { props.current_map == HEX_MAP ? (<HexagonIcon/>) : (<SquareIcon/>) }
           </button>
+
         </div>
+
+          {
+            props.current_map == HEX_MAP ? (
+              <div>
+                <Checkbox name="Wygładzanie" on_change={ props.on_gl_change }/>
+              </div>
+            ) : ""
+          }
 
         <hr/>
 

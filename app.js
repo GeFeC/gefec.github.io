@@ -9,11 +9,12 @@ window.App = function App(){
   const [free_infs_checked, set_free_infs_checked] = useState(false);
   const [free_bgs_checked, set_free_bgs_checked] = useState(false);
   const [signal_function, set_signal_function] = useState("DIT");
+  const [gl_layer_enabled, set_gl_layer_enabled] = useState(false);
   const data_loaded_ref = useRef(false);
 
   const [grid_opacity, set_grid_opacity] = useState(0.4);
 
-  const [current_map, set_current_map] = useState(HEX_MAP)
+  const [current_map, set_current_map] = useState(HEX_MAP);
 
   const [params, set_params] = useState({
     s: CELL_SIZE_IN_METERS / 2,
@@ -97,7 +98,7 @@ window.App = function App(){
 
   const on_s_slider_change = (value) => {
     const new_params = structuredClone(params);
-    new_params.s = value;
+    new_params.s = Math.max(1 / 1000, value);
     set_params(new_params);
   }
 
@@ -201,6 +202,10 @@ window.App = function App(){
     set_signals(data);
   }
 
+  const on_gl_change = data => {
+    set_gl_layer_enabled(data);
+  }
+
   return (
     <div>
       <MapComponent 
@@ -212,6 +217,7 @@ window.App = function App(){
         params = { params }
         current_map = { current_map }
         update_histogram = { update_histogram }
+        gl_layer_enabled = { gl_layer_enabled }
       />
 
       <Controls 
@@ -239,6 +245,7 @@ window.App = function App(){
         on_weight_linear_change = { on_weight_linear_change }
         on_weight_scale_method_change = { on_weight_scale_method_change }
         on_map_change = { on_map_change }
+        on_gl_change = { on_gl_change }
       />
 
       <HistogramControls

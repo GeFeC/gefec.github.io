@@ -1,15 +1,162 @@
+let triangles = {};
+let gl_layer = null;
+
+function toMercator(lat, lng) {
+  const x = (lng + 180) / 360;
+  const rad = lat * Math.PI / 180;
+  const y = 0.5 - Math.log(Math.tan(Math.PI / 4 + rad / 2)) / (2 * Math.PI);
+  return [x, y];
+}
+
+class GouraudMeshLayer extends deck.Layer {
+  map = null;
+
+  getShaders() {
+    return {
+      vs: `
+        attribute vec3 positions; 
+        attribute vec4 colors;
+
+        uniform vec2 uNW; // Mercator bounds (NW)
+        uniform vec2 uSE; // Mercator bounds (SE)
+
+        varying vec4 vColor;
+
+
+        vec2 latLngToMercator(vec2 lngLat) {
+          float lng = lngLat.x;
+          float lat = lngLat.y;
+
+          float x = (lng + 180.0) / 360.0;
+          float radLat = lat * PI / 180.0;
+          float y = 0.5 - log(tan(PI * 0.25 + radLat * 0.5)) / (2.0 * PI);
+
+          return vec2(x, y);
+        }
+
+        vec3 srgbToLinear(vec3 color) {
+          return pow(color, vec3(3.0));
+        }
+
+        void main() {
+          vColor = vec4(srgbToLinear(colors.rgb), colors.a);
+
+          vec2 mercator = latLngToMercator(positions.xy);
+
+          vec2 norm = (mercator - uNW) / (uSE - uNW);
+
+          vec2 clipSpace = norm * 2.0 - 1.0;
+          clipSpace.y = -clipSpace.y; 
+
+          gl_Position = vec4(clipSpace, 0.0, 1.0);
+        }
+      `,
+      fs: `
+        precision mediump float;
+        varying vec4 vColor;
+
+        vec3 linearToSrgb(vec3 color) {
+          return pow(color, vec3(1.0 / 3.0));
+        }
+
+        void main() {
+          gl_FragColor = vec4(linearToSrgb(vColor.rgb), vColor.a);
+        }
+      `,
+      modules: [deck.project]
+    };
+  }
+
+  initializeState() {
+    const model = this._getModel(this.context.gl);
+    if (model) {
+      this.setState({
+        model,
+        models: [model]
+      });
+    }
+  }
+
+  _getModel(gl) {
+    const { mesh } = this.props;
+    if (!mesh || !mesh.positions || mesh.positions.length === 0) return null;
+
+    return new luma.Model(gl, {
+      ...this.getShaders(),
+      id: `${this.props.id}-model`,
+      geometry: new luma.Geometry({
+        id: `${this.props.id}-geom`,
+        drawMode: gl.TRIANGLES,
+        attributes: {
+          positions: { value: mesh.positions, size: 3 },
+          colors: { value: mesh.colors, size: 4 },
+          indices: { value: mesh.indices, size: 1 }
+        },
+      })
+    });
+  }
+
+  updateState({ props, oldProps, changeFlags }) {
+    if (changeFlags.dataChanged || props.mesh !== oldProps.mesh) {
+      if (this.state.model) {
+        this.state.model.delete();
+      }
+      const model = this._getModel(this.context.gl);
+      if (model) {
+        this.setState({
+          model,
+          models: [model]
+        });
+      }
+    }
+  }
+
+  draw(){
+    const { model } = this.state;
+    if (!model) return;
+
+    const bounds = this.map.getBounds();
+    const nw = toMercator(bounds.getNorth(), bounds.getWest());
+    const se = toMercator(bounds.getSouth(), bounds.getEast());
+
+    model.setUniforms({
+      uNW: nw,
+      uSE: se
+    });
+    model.draw();
+  }
+}
+
+function lngLatToMeters(lat, lng, anchorLat, anchorLng) {
+  const METERS_PER_DEGREE_LAT = ONE_GEO_DEGREE_TO_METERS;
+  const radLat = (anchorLat * Math.PI) / 180;
+  const METERS_PER_DEGREE_LNG = ONE_GEO_DEGREE_TO_METERS * Math.cos(radLat);
+
+  const dx = (lng - anchorLng) * METERS_PER_DEGREE_LNG; 
+  const dy = (lat - anchorLat) * METERS_PER_DEGREE_LAT;
+  return [dx, dy];
+}
+
+const draw_line = (group, p1, p2, color) => {
+  L.polyline([p1, p2], {
+    color: color,
+    weight: 3,
+    opacity: 1.0
+  }).addTo(group);
+}
+
 const hexagon_map = {
   get_data_as_1d_array: (data) => {
     return [...Object.values(data)]
   },
-  update_grid: (hex_data, params) => {
+  update_grid: (hex_data, params, map, visible) => {
     for (let hex_idx in hex_data){
       const hex = hex_data[hex_idx];
       hex.t = [];
       hex.i = [];
       hex.b = [];
 
-      const hex_neighbours = h3.gridDisk(hex_idx, hex.center_position, 1);
+      const hex_neighbours = h3.gridDisk(hex_idx, 1);
       hex_neighbours.forEach(hex_idx => {
         const hex = hex_data[hex_idx];
 
@@ -48,6 +195,60 @@ const hexagon_map = {
       }).bindPopup(`Sygnał: ${signal}`);
       hex.signal = signal;
     }
+
+    const h3Entries = Object.entries(hex_data);
+    const numPoints = h3Entries.length;
+
+    const positions = new Float32Array(numPoints * 3);
+    const colors = new Float32Array(numPoints * 4);
+    const coords2D = new Float64Array(numPoints * 2);
+
+    h3Entries.forEach(([h3Index, data], i) => {
+      const [lat, lng] = h3.cellToLatLng(h3Index);
+
+      positions[i * 3 + 0] = lng;
+      positions[i * 3 + 1] = lat;
+      positions[i * 3 + 2] = 0;
+
+      const [r, g, b] = map_to_color_array(data.signal);
+      colors[i * 4 + 0] = r / 255;
+      colors[i * 4 + 1] = g / 255;
+      colors[i * 4 + 2] = b / 255;
+      colors[i * 4 + 3] = 255;
+
+      coords2D[i * 2 + 0] = lng;
+      coords2D[i * 2 + 1] = lat;
+    });
+
+    const delaunay = new d3.Delaunay(coords2D);
+
+    const mesh = {
+      colors: colors,
+      positions: positions,
+      indices: new Uint32Array(delaunay.triangles)
+    };
+
+    if (gl_layer != null && gl_layer != undefined){
+      map.removeLayer(gl_layer);
+    }
+
+    const gouraudLayer = new GouraudMeshLayer({
+      id: 'h3-gouraud-layer',
+      mesh: mesh,
+      visible: visible || false 
+    });
+
+    gouraudLayer.map = map;
+
+    gl_layer = new DeckGlLeaflet.LeafletLayer({
+      layers: [
+        gouraudLayer
+      ]
+    });
+
+    map.addLayer(gl_layer);
+
+    return gouraudLayer;
   },
   load: (hex_data, poi, inf, bg) => {
     poi.forEach(p => {
