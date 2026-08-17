@@ -141,3 +141,52 @@ let INC = INC_weight_mean;
 let influence = gaussian_influence;
 
 let get_signal = DIT;
+
+const EARTH_RADIUS_M = 6371000;
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const toRad = deg => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dlon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dlon / 2) ** 2;
+  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
+}
+
+function getFastBoundingGeoCircle(points) {
+  if (!points || points.length === 0) return null;
+  if (points.length === 1) return { center: points[0], radiusMeters: 0 };
+
+  let minLat = Infinity, maxLat = -Infinity;
+  let minlon = Infinity, maxlon = -Infinity;
+
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    if (p.lat < minLat) minLat = p.lat;
+    if (p.lat > maxLat) maxLat = p.lat;
+    if (p.lon < minlon) minlon = p.lon;
+    if (p.lon > maxlon) maxlon = p.lon;
+  }
+
+  const centerLat = (minLat + maxLat) / 2;
+  const centerlon = (minlon + maxlon) / 2;
+
+  const corners = [
+    [minLat, minlon],
+    [minLat, maxlon],
+    [maxLat, minlon],
+    [maxLat, maxlon]
+  ];
+
+  let maxRadius = 0;
+  for (const [cLat, clon] of corners) {
+    const d = haversineDistance(centerLat, centerlon, cLat, clon);
+    if (d > maxRadius) maxRadius = d;
+  }
+
+  return {
+    center: { lat: centerLat, lon: centerlon },
+    radiusMeters: maxRadius
+  };
+}

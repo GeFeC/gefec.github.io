@@ -250,23 +250,25 @@ const hexagon_map = {
 
     return gouraudLayer;
   },
-  load: (hex_data, poi, inf, bg) => {
+  load: (hex_data, poi, inf, bg, h3_params) => {
+    const { resolution } = h3_params;
+
     poi.forEach(p => {
-      const hex_index = h3.latLngToCell(p.lat, p.lon, H3_RESOLUTION);
+      const hex_index = h3.latLngToCell(p.lat, p.lon, resolution);
       const cell = hex_data[hex_index];
       if (cell == null) return;
       cell.pois.push(p);
     })
 
     inf.forEach(p => {
-      const hex_index = h3.latLngToCell(p.lat, p.lon, H3_RESOLUTION);
+      const hex_index = h3.latLngToCell(p.lat, p.lon, resolution);
       const cell = hex_data[hex_index];
       if (cell == null) return;
       cell.infs.push(p);
     })
 
     bg.forEach(p => {
-      const hex_index = h3.latLngToCell(p.lat, p.lon, H3_RESOLUTION);
+      const hex_index = h3.latLngToCell(p.lat, p.lon, resolution);
       const cell = hex_data[hex_index];
       if (cell == null) return;
       cell.bgs.push(p);
@@ -282,16 +284,21 @@ const hexagon_map = {
   is_empty: (hex_data) => {
     return [...Object.values(hex_data)].length == 0;
   },
-  init: (grid_group, static_canvas) => {
+  init: (grid_group, static_canvas, h3_params) => {
+    const { center_pos } = h3_params;
+    const { resolution } = h3_params;
+    const { radius } = h3_params;
+
     const h3_center = h3.latLngToCell(
-      KIELCE_POSITION[X],
-      KIELCE_POSITION[Y],
-      H3_RESOLUTION
+      center_pos.lat,
+      center_pos.lon,
+      resolution
     );
 
-    const h3_indices = h3.gridDisk(h3_center, H3_RADIUS);
+    const h3_indices = h3.gridDisk(h3_center, radius);
 
     const hex_data = {};
+
     h3_indices.forEach(hex => {
       const boundary = h3.cellToBoundary(hex);
       const polygon = L.polygon(boundary, {
