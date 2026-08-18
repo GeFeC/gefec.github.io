@@ -145,18 +145,25 @@ const draw_line = (group, p1, p2, color) => {
   }).addTo(group);
 }
 
-const hexagon_map = {
-  get_data_as_1d_array: (data) => {
+class HexagonMap{
+  h3_params = {};
+  get_data_as_1d_array(data){
     return [...Object.values(data)]
-  },
-  update_grid: (hex_data, params, map, visible) => {
+  };
+  update_grid(hex_data, params, map, visible){
     for (let hex_idx in hex_data){
       const hex = hex_data[hex_idx];
       hex.t = [];
       hex.i = [];
       hex.b = [];
 
-      const hex_neighbours = h3.gridDisk(hex_idx, 1);
+      const neighbours_radius = Math.max(
+        1, 
+        Math.floor(params.s / h3.getHexagonEdgeLengthAvg(this.h3_params.resolution, 'm') / Math.sqrt(3))
+      );
+      console.log(neighbours_radius)
+
+      const hex_neighbours = h3.gridDisk(hex_idx, neighbours_radius);
       hex_neighbours.forEach(hex_idx => {
         const hex = hex_data[hex_idx];
 
@@ -249,9 +256,9 @@ const hexagon_map = {
     map.addLayer(gl_layer);
 
     return gouraudLayer;
-  },
-  load: (hex_data, poi, inf, bg, h3_params) => {
-    const { resolution } = h3_params;
+  };
+  load(hex_data, poi, inf, bg){
+    const { resolution } = this.h3_params;
 
     poi.forEach(p => {
       const hex_index = h3.latLngToCell(p.lat, p.lon, resolution);
@@ -273,18 +280,19 @@ const hexagon_map = {
       if (cell == null) return;
       cell.bgs.push(p);
     })
-  },
-  on_zoomend: (hex_data, grid_group) => {
+  };
+  on_zoomend(hex_data, grid_group){
     for (let hex_idx in hex_data){
       const hex = hex_data[hex_idx];
 
       hex.drawable.addTo(grid_group); 
     }
-  },
-  is_empty: (hex_data) => {
+  };
+  is_empty(hex_data){
     return [...Object.values(hex_data)].length == 0;
-  },
-  init: (grid_group, static_canvas, h3_params) => {
+  };
+  init(grid_group, static_canvas, h3_params){
+    this.h3_params = h3_params;
     const { center_pos } = h3_params;
     const { resolution } = h3_params;
     const { radius } = h3_params;
@@ -331,5 +339,7 @@ const hexagon_map = {
     })
 
     return hex_data;
-  }
-}
+  };
+} 
+
+const hexagon_map = new HexagonMap();

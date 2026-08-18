@@ -5,6 +5,8 @@ window.App = function App(){
 
   const [grid_data, set_grid_data] = useState(null);
   const [signals, set_signals] = useState([])
+  const [hex_resolution, set_hex_resolution] = useState(9)
+  const [sq_resolution, set_sq_resolution] = useState(DEFAULT_CELL_SIZE_IN_METERS)
   const [free_pois_checked, set_free_pois_checked] = useState(false);
   const [free_infs_checked, set_free_infs_checked] = useState(false);
   const [free_bgs_checked, set_free_bgs_checked] = useState(false);
@@ -17,7 +19,7 @@ window.App = function App(){
   const [current_map, set_current_map] = useState(HEX_MAP);
 
   const [params, set_params] = useState({
-    s: CELL_SIZE_IN_METERS / 2,
+    s: DEFAULT_CELL_SIZE_IN_METERS / 2,
     alpha: [0.5, 0.5],
     alpha0: 1,
     beta: 0.5,
@@ -34,6 +36,7 @@ window.App = function App(){
       alert("Dane już są załadowane!")
       return;
     }
+
 
     set_grid_data({
       poi: poi,
@@ -206,6 +209,14 @@ window.App = function App(){
     set_gl_layer_enabled(data);
   }
 
+  const on_hex_res_change = data => {
+    set_hex_resolution(data);
+  }
+
+  const on_sq_res_change = data => {
+    set_sq_resolution(data);
+  }
+
   return (
     <div>
       <MapComponent 
@@ -218,6 +229,8 @@ window.App = function App(){
         current_map = { current_map }
         update_histogram = { update_histogram }
         gl_layer_enabled = { gl_layer_enabled }
+        hex_resolution = { hex_resolution }
+        sq_resolution = { sq_resolution }
       />
 
       <Controls 
@@ -246,6 +259,8 @@ window.App = function App(){
         on_weight_scale_method_change = { on_weight_scale_method_change }
         on_map_change = { on_map_change }
         on_gl_change = { on_gl_change }
+        on_hex_res_change = { on_hex_res_change }
+        on_sq_res_change = { on_sq_res_change }
       />
 
       <HistogramControls

@@ -1,9 +1,15 @@
-const get_drawing_starting_point = () => {
-  return get_square_bounds_around(
-    KIELCE_POSITION[0], 
-    KIELCE_POSITION[1], 
-    MAP_CELLS * CELL_SIZE_IN_METERS - CELL_SIZE_IN_METERS / 2
-  )[0];
+const get_drawing_starting_point = (sq_params) => {
+  const { center_pos } = sq_params;
+  const { square_size } = sq_params;
+  const { map_size } = sq_params;
+
+  const bounds = get_square_bounds_around(
+    center_pos.lat, 
+    center_pos.lon, 
+    map_size * square_size
+  );
+
+  return bounds[0];
 } 
 
 const geo_move = (geo, vector) => {
@@ -16,42 +22,41 @@ const geo_move = (geo, vector) => {
   return [geo[LAT] + lat_delta, geo[LON] + lon_delta];
 }
 
-let too_small_grid_alert_shown = false;
-const get_locations_and_corresponding_indices = (starting_point, locations) => {
-  const result = []
 
-  locations.forEach(p => {
-    const { lat, lon } = p
+class SquareMap{
+  sq_params = {};
 
-    const [x, y] = get_move_vector(starting_point, [lat, lon]);
-
-    const x_idx = parseInt(Math.round(x / CELL_SIZE_IN_METERS));
-    const y_idx = -parseInt(Math.round(y / CELL_SIZE_IN_METERS));
-
-if (x_idx < 0 || x_idx >= MAP_CELLS || y_idx < 0 || y_idx >= MAP_CELLS){
-      if (!too_small_grid_alert_shown){
-        alert("Ostrzezenie! Przynajmniej jeden obiekt nie miesci sie w siatce! Nalezy powiekszyc siatke!");
-        too_small_grid_alert_shown = true;
-      }
-
-      return;
-    }
-
-    result.push([x_idx, y_idx, p])
-  })
-
-  return result
-}
-
-const square_map = {
-  get_data_as_1d_array: (data) => {
+  get_data_as_1d_array(data){
     return [].concat.apply([], data);
-  },
-  update_grid: (sq_data, params) => {
-    const starting_point = get_drawing_starting_point();
+  };
 
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
+  get_locations_and_corresponding_indices(starting_point, locations){
+    const result = []
+
+    const { square_size } = this.sq_params;
+
+    locations.forEach(p => {
+      const { lat, lon } = p
+
+      const [x, y] = get_move_vector(starting_point, [lat, lon]);
+
+      const x_idx = parseInt(Math.round(x / square_size));
+      const y_idx = -parseInt(Math.round(y / square_size));
+
+      result.push([x_idx, y_idx, p])
+    })
+
+    return result
+  };
+
+  update_grid(sq_data, params){
+    const starting_point = get_drawing_starting_point(this.sq_params);
+
+    const { map_size } = this.sq_params;
+    const { square_size } = this.sq_params;
+
+    for (let y = 0; y < map_size; ++y){
+      for (let x = 0; x < map_size; ++x){
         const cell = sq_data[x][y];
         cell.t = [];
         cell.i = [];
@@ -59,17 +64,22 @@ const square_map = {
       }
     }
 
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
-        const center_pos = geo_move(starting_point, [x * CELL_SIZE_IN_METERS, y * CELL_SIZE_IN_METERS]);
+    for (let y = 0; y < map_size; ++y){
+      for (let x = 0; x < map_size; ++x){
+        const center_pos = geo_move(starting_point, [x * square_size, y * square_size]);
 
         const surrounding_cells = (() => {
           const result = []
 
-          for (let i = -1; i <= 1; ++i){
-            for (let j = -1; j <= 1; ++j){
-              if (x + i < 0 || x + i >= MAP_CELLS) continue;
-              if (y + j < 0 || y + j >= MAP_CELLS) continue;
+          const neighbours_radius = Math.max(
+            0,
+            Math.floor(params.s / this.sq_params.square_size / Math.sqrt(2))
+          );
+
+          for (let i = -neighbours_radius; i <= neighbours_radius; ++i){
+            for (let j = -neighbours_radius; j <= neighbours_radius; ++j){
+              if (x + i < 0 || x + i >= map_size) continue;
+              if (y + j < 0 || y + j >= map_size) continue;
 
               result.push(sq_data[x + i][y + j]);
             }
@@ -87,8 +97,8 @@ const square_map = {
     }
 
     const signals = []
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
+    for (let y = 0; y < map_size; ++y){
+      for (let x = 0; x < map_size; ++x){
         const cell = sq_data[x][y];
 
         cell.T = get_accumulated_influence(cell.t);
@@ -101,9 +111,9 @@ const square_map = {
 
     const max_signal = Math.max(...signals)
 
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
-        let signal = signals[y * MAP_CELLS + x];
+    for (let y = 0; y < map_size; ++y){
+      for (let x = 0; x < map_size; ++x){
+        let signal = signals[y * map_size + x];
 
         if (params.use_log_compression){
           signal = log_compression(signal, max_signal);
@@ -116,18 +126,21 @@ const square_map = {
         sq_data[x][y].signal = signal;
       }
     }
-  },
-  is_empty: (sq_data) => {
+  };
+  is_empty(sq_data){
     return sq_data[0] == undefined || sq_data[0] == null;
-  },
-  init: (grid_group, static_canvas) => {
-    const data = matrix(MAP_CELLS, MAP_CELLS, {});
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
-        const starting_point = get_drawing_starting_point();
-        const center_pos = geo_move(starting_point, [x * CELL_SIZE_IN_METERS, y * CELL_SIZE_IN_METERS]);
+  };
+  init(grid_group, static_canvas, sq_params){
+    this.sq_params = sq_params;
+    const { map_size, square_size } = this.sq_params;
 
-        const bounds = get_square_bounds_around(center_pos[X], center_pos[Y], CELL_SIZE_IN_METERS);
+    const data = matrix(map_size, map_size, {});
+    for (let y = 0; y < map_size; ++y){
+      for (let x = 0; x < map_size; ++x){
+        const starting_point = get_drawing_starting_point(this.sq_params);
+        const center_pos = geo_move(starting_point, [x * square_size, y * square_size]);
+
+        const bounds = get_square_bounds_around(center_pos[X], center_pos[Y], square_size);
         const polygon = L.rectangle(bounds, {
           renderer: static_canvas,
           weight: 2,
@@ -153,27 +166,31 @@ const square_map = {
     }
 
     return data;
-  },
-  load: (sq_data, poi, inf, bg) => {
-    const starting_point = get_drawing_starting_point();
+  };
+  load(sq_data, poi, inf, bg){
+    const starting_point = get_drawing_starting_point(this.sq_params);
 
-    get_locations_and_corresponding_indices(starting_point, poi).forEach(([x_idx, y_idx, poi]) => {
+    this.get_locations_and_corresponding_indices(starting_point, poi).forEach(([x_idx, y_idx, poi]) => {
       sq_data[x_idx][y_idx].pois.push(poi);
     })
 
-    get_locations_and_corresponding_indices(starting_point, inf).forEach(([x_idx, y_idx, inf]) => {
+    this.get_locations_and_corresponding_indices(starting_point, inf).forEach(([x_idx, y_idx, inf]) => {
       sq_data[x_idx][y_idx].infs.push(inf);
     })
 
-    get_locations_and_corresponding_indices(starting_point, bg).forEach(([x_idx, y_idx, bg]) => {
+    this.get_locations_and_corresponding_indices(starting_point, bg).forEach(([x_idx, y_idx, bg]) => {
       sq_data[x_idx][y_idx].bgs.push(bg);
     })
-  },
-  on_zoomend: (sq_data, grid_group) => {
-    for (let y = 0; y < MAP_CELLS; ++y){
-      for (let x = 0; x < MAP_CELLS; ++x){
+  };
+  on_zoomend(sq_data, grid_group){
+    const { map_size } = this.sq_params;
+
+    for (let y = 0; y < map_size; ++y){
+      for (let x = 0; x < map_size; ++x){
         sq_data[x][y].drawable.addTo(grid_group);
       }
     }
   }
 }
+
+const square_map = new SquareMap();

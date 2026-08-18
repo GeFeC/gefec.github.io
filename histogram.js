@@ -57,7 +57,7 @@ window.Histogram = function Histogram(props){
           buckets.map((e, index) => {
 
             const bar_width = get_bar_width();
-            const bar_height = `${ e.height * 100 }%`;
+            const bar_height = `${ e.height }`;
 
             const style = {
               width: bar_width, 
@@ -73,7 +73,7 @@ window.Histogram = function Histogram(props){
                 <div style={{ height: '16px' }}>
                   { e.data.length }
                 </div>
-                <div style={{ height: `calc(${ bar_height } - 16px)`, background: 'black' }}>
+                <div style={{ height: `calc(calc(100% - 16px) * ${e.height})`, background: 'black' }}>
 
                 </div>
               </div>

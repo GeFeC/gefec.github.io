@@ -18,7 +18,6 @@ window.Controls = function Controls(props){
   const Checkbox = window.Checkbox;
   const Slider = window.Slider;
   const SelectList = window.SelectList;
-  const Histogram = window.Histogram;
 
   const { on_data_loaded } = props;
 
@@ -38,8 +37,8 @@ window.Controls = function Controls(props){
     background: 'white',
     boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
     zIndex: 1000,
-    width: 'min(calc(100vw - 20px), 400px)',
-    maxHeight: 'calc(50vh - 20px)',
+    width: 'min(calc(100vw - 20px), 450px)',
+    maxHeight: 'calc(80vh - 20px)',
     overflowX: 'scroll',
     boxSizing: 'border-box'
   };
@@ -145,6 +144,32 @@ window.Controls = function Controls(props){
           </button>
 
         </div>
+
+        <hr/>
+
+          {
+            props.current_map == HEX_MAP ? (
+              <Slider
+                name="Rozdzielczość" 
+                value={ 9 }
+                step={ 1 }
+                key="res-hex" 
+                on_change={ props.on_hex_res_change }
+                min={ 6 }
+                max={ 10 }
+              />
+            ) : (
+              <Slider
+                name="Rozdzielczość" 
+                value={ DEFAULT_CELL_SIZE_IN_METERS }
+                step={ 5 }
+                key="res-sq" 
+                on_change={ props.on_sq_res_change }
+                min={ 100 }
+                max={ 2000 }
+              />
+            )
+          }
 
           {
             props.current_map == HEX_MAP ? (
@@ -312,7 +337,7 @@ window.Controls = function Controls(props){
           name="s"
           value={ params.s }
           min={ 0 }
-          max={ CELL_SIZE_IN_METERS }
+          max={ 1000 }
           step={ 1 }
           on_change={ on_s_slider_change }
         />

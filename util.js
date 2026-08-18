@@ -154,7 +154,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
 }
 
-function getFastBoundingGeoCircle(points) {
+function getBoundingCorners(points){
   if (!points || points.length === 0) return null;
   if (points.length === 1) return { center: points[0], radiusMeters: 0 };
 
@@ -169,15 +169,20 @@ function getFastBoundingGeoCircle(points) {
     if (p.lon > maxlon) maxlon = p.lon;
   }
 
-  const centerLat = (minLat + maxLat) / 2;
-  const centerlon = (minlon + maxlon) / 2;
 
-  const corners = [
+  return [
     [minLat, minlon],
     [minLat, maxlon],
     [maxLat, minlon],
     [maxLat, maxlon]
   ];
+}
+
+function getFastBoundingGeoCircle(points) {
+  const corners = getBoundingCorners(points);
+
+  const centerLat = (corners[0][0] + corners[2][0]) / 2;
+  const centerlon = (corners[0][1] + corners[3][1]) / 2;
 
   let maxRadius = 0;
   for (const [cLat, clon] of corners) {

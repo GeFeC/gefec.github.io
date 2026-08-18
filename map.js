@@ -122,11 +122,11 @@ window.MapComponent = function MapComponent(props){
       current_map_ref.current = hexagon_map;
     }
 
-    init_grid();
+    init_grid(props.hex_resolution, props.sq_resolution);
     update_grid();
 
     redraw_everything();
-  }, [props.current_map])
+  }, [props.current_map, props.hex_resolution, props.sq_resolution])
 
   const { free_pois_checked, free_infs_checked, free_bgs_checked } = props;
 
@@ -178,12 +178,14 @@ window.MapComponent = function MapComponent(props){
     infs_ref.current = inf;
     bgs_ref.current = bg;
 
+
     map_ref.current.on("zoomend", function() {
       if (bgs_ref.current == null) return;
       redraw_everything();
     })
 
-    const { center_pos } = init_grid();
+    const { center_pos } = init_grid(props.hex_resolution, props.sq_resolution);
+
     map_ref.current.setView(center_pos, DEFAULT_ZOOM);
 
     draw_all_free_locations(DEFAULT_LOCATIONS_SIZE);
@@ -195,32 +197,38 @@ window.MapComponent = function MapComponent(props){
     update_grid();
   }, [grid_data])
 
-  const init_grid = () => {
+  const init_grid = (hex_resolution, sq_resolution) => {
     const bounding_circle = getFastBoundingGeoCircle([
       ...pois_ref.current,
       ...infs_ref.current,
       ...bgs_ref.current
     ])
-    
-    const center = bounding_circle.center;
-    const resolution = 9;
-    const radius = Math.ceil(bounding_circle.radiusMeters / h3.getHexagonEdgeLengthAvg(resolution, 'm') / Math.sqrt(3));
 
-    data_ref.current = current_map_ref.current.init(grid_group_ref.current, static_canvas_ref.current, {
-      center_pos: center,
-      radius: radius,
-      resolution: resolution
-    });
+    const params = {
+      center_pos: bounding_circle.center
+    };
+
+    if (current_map_ref.current == hexagon_map){
+      params.resolution = hex_resolution;
+      params.radius = Math.ceil(bounding_circle.radiusMeters / h3.getHexagonEdgeLengthAvg(params.resolution, 'm') / Math.sqrt(3));
+    }
+    else{
+      params.square_size = sq_resolution;
+      params.map_size = Math.ceil(bounding_circle.radiusMeters * 2 / params.square_size);
+
+    }
+
+    data_ref.current = current_map_ref.current.init(grid_group_ref.current, static_canvas_ref.current, params);
     
     current_map_ref.current.load(
       data_ref.current, 
       pois_ref.current, 
       infs_ref.current, 
       bgs_ref.current,
-      { resolution: resolution }
+      params
     );
 
-    return { center_pos: center }
+    return { center_pos: params.center_pos }
   }
 
   useEffect(() => {
