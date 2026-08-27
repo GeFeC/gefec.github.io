@@ -343,7 +343,7 @@ window.Controls = function Controls(props){
         />
 
         <Checkbox
-          name="Pomnóż s przez (1 + W^2)"
+          name="Pomnóż s przez (1 + W)^2"
           on_change={ props.on_s_multiply_change }
         />
 

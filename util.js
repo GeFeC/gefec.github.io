@@ -18,7 +18,7 @@ const influence_s_const = (W, s) => {
 }
 
 const influence_s_weight = (W, s) => {
-  return s * (1 + W * W);
+  return s * Math.pow(2, 1 + W);
 }
 
 let influence_s = influence_s_const;

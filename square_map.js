@@ -67,6 +67,7 @@ class SquareMap{
     for (let y = 0; y < map_size; ++y){
       for (let x = 0; x < map_size; ++x){
         const center_pos = geo_move(starting_point, [x * square_size, y * square_size]);
+        const cell = sq_data[x][y];
 
         const surrounding_cells = (() => {
           const result = []
@@ -88,10 +89,10 @@ class SquareMap{
           return result;
         })()
 
-        surrounding_cells.forEach(cell => {
-          cell.t = [...cell.t, ...get_influence_series(cell.pois, center_pos, params)];
-          cell.i = [...cell.i, ...get_influence_series(cell.infs, center_pos, params)];
-          cell.b = [...cell.b, ...get_influence_series(cell.bgs, center_pos, params)];
+        surrounding_cells.forEach(neighbour => {
+          neighbour.t = [...neighbour.t, ...get_influence_series(cell.pois, center_pos, params)];
+          neighbour.i = [...neighbour.i, ...get_influence_series(cell.infs, center_pos, params)];
+          neighbour.b = [...neighbour.b, ...get_influence_series(cell.bgs, center_pos, params)];
         })
       }
     }

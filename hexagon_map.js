@@ -161,17 +161,18 @@ class HexagonMap{
         1, 
         Math.floor(params.s / h3.getHexagonEdgeLengthAvg(this.h3_params.resolution, 'm') / Math.sqrt(3))
       );
-      console.log(neighbours_radius)
 
       const hex_neighbours = h3.gridDisk(hex_idx, neighbours_radius);
+
       hex_neighbours.forEach(hex_idx => {
-        const hex = hex_data[hex_idx];
+        const neighbour = hex_data[hex_idx];
 
-        if (hex == null) return;
+        if (neighbour == null) return;
 
-        hex.t = [...hex.t, ...get_influence_series(hex.pois, hex.center_position, params)];
-        hex.i = [...hex.i, ...get_influence_series(hex.infs, hex.center_position, params)];
-        hex.b = [...hex.b, ...get_influence_series(hex.bgs, hex.center_position, params)];
+        neighbour.t = [...neighbour.t, ...get_influence_series(hex.pois, hex.center_position, params)];
+        neighbour.i = [...neighbour.i, ...get_influence_series(hex.infs, hex.center_position, params)];
+        neighbour.b = [...neighbour.b, ...get_influence_series(hex.bgs, hex.center_position, params)];
+
       })
     }
 
@@ -199,7 +200,7 @@ class HexagonMap{
       const signal = signals[hex_idx];
       hex.drawable.setStyle({
         fillColor: map_to_color(signal)
-      }).bindPopup(`Sygnał: ${signal}`);
+      }).bindPopup(`${hex_idx} Sygnał: ${signal}`);
       hex.signal = signal;
     }
 
