@@ -11,7 +11,7 @@ window.Slider = function Slider(props){
     }
 
     set_val(e.target.value);
-    on_change(parseFloat(e.target.value));
+    on_change(clamp(parseFloat(e.target.value), min, max));
   }
 
   const min = props.min || 0;
@@ -23,12 +23,12 @@ window.Slider = function Slider(props){
       set_val("");
     }
 
-    let new_val = parseFloat(e.target.value);
+    const new_val = parseFloat(e.target.value);
 
     if (!isNaN(new_val)){
-      new_val = clamp(new_val, min, max);
+      const clamped_val = clamp(new_val, min, max);
       set_val(new_val);
-      on_change(new_val);
+      on_change(clamped_val);
     }
     else{
       set_val(e.target.value)

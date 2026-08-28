@@ -89,6 +89,7 @@ class SquareMap{
           return result;
         })()
 
+        params.W_scale = 500 / this.sq_params.square_size;
         surrounding_cells.forEach(neighbour => {
           neighbour.t = [...neighbour.t, ...get_influence_series(cell.pois, center_pos, params)];
           neighbour.i = [...neighbour.i, ...get_influence_series(cell.infs, center_pos, params)];

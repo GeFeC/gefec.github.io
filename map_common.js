@@ -28,7 +28,8 @@ const get_influence_series = (locations, cell_center_pos, params) => {
 
     if (d >= 2 * params.s) return;
 
-    t.push(influence(d, get_weight(p, params), params));
+    const final_weight = Math.min(1, get_weight(p, params) * params.W_scale);
+    t.push(influence(d, final_weight, params));
 
   })
 
