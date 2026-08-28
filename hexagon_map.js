@@ -158,8 +158,8 @@ class HexagonMap{
       hex.b = [];
 
       const neighbours_radius = Math.max(
-        1, 
-        Math.floor(params.s / h3.getHexagonEdgeLengthAvg(this.h3_params.resolution, 'm') / Math.sqrt(3))
+        0, 
+        Math.round(params.s / h3.getHexagonEdgeLengthAvg(this.h3_params.resolution, 'm') / Math.sqrt(3))
       );
 
       const hex_neighbours = h3.gridDisk(hex_idx, neighbours_radius);
@@ -169,7 +169,7 @@ class HexagonMap{
 
         if (neighbour == null) return;
 
-        neighbour.t = [...neighbour.t, ...get_influence_series(hex.pois, hex.center_position, params)];
+        neighbour.t = [...neighbour.t, ...get_inflence_series(hex.pois, hex.center_position, params)];
         neighbour.i = [...neighbour.i, ...get_influence_series(hex.infs, hex.center_position, params)];
         neighbour.b = [...neighbour.b, ...get_influence_series(hex.bgs, hex.center_position, params)];
 

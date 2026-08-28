@@ -74,7 +74,7 @@ class SquareMap{
 
           const neighbours_radius = Math.max(
             0,
-            Math.floor(params.s / this.sq_params.square_size / Math.sqrt(2))
+            Math.round(params.s / this.sq_params.square_size / Math.sqrt(2))
           );
 
           for (let i = -neighbours_radius; i <= neighbours_radius; ++i){
