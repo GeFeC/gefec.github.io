@@ -57,7 +57,7 @@ function earthMoversDistance(supply, demand, cost) {
           u = v;
         }
       }
-      if (u === -1 || u === T) break;
+      if (u === -1) break;
       visited[u] = 1;
  
       for (let v = 0; v < V; v++) {
@@ -75,7 +75,7 @@ function earthMoversDistance(supply, demand, cost) {
     if (prev[T] === -1) break; // no augmenting path left (shouldn't happen if balanced)
  
     for (let v = 0; v < V; v++) {
-      if (dist[v] < Infinity) potential[v] += dist[v];
+      if (visited[v]) potential[v] += dist[v];
     }
  
     let bottleneck = remaining;
@@ -102,6 +102,7 @@ function earthMoversDistance(supply, demand, cost) {
  
   return { distance: totalCost, flow };
 }
+
 
 function buildCostMatrix(hexesA, hexesB) {
   return hexesA.map((ha) => {

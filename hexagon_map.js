@@ -177,7 +177,6 @@ class HexagonMap{
 
       })
     }
-
     const signals = {};
 
     for (let hex_idx in hex_data){

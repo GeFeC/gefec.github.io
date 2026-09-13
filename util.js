@@ -195,3 +195,20 @@ function getFastBoundingGeoCircle(points) {
     radiusMeters: maxRadius
   };
 }
+
+function getDistance(p1, p2) {
+  const dx = p1.x - p2.x;
+  const dy = p1.y - p2.y;
+  return Math.hypot(dx, dy); 
+}
+
+function benchmark(name, fn){
+  const start_time = performance.now();
+
+  const result = fn();
+
+  const end_time = performance.now();
+  console.log(name, "Wynik:", result, "Czas:", `${(end_time - start_time) / 1000}s`)
+
+  return result;
+}

@@ -55,6 +55,8 @@ window.MapComponent = function MapComponent(props){
     if (overlay){
       overlay.style.opacity = grid_opacity
     }
+
+    props.set_data({ ...data_ref.current })
   }
 
   useEffect(() => {

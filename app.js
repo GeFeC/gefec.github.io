@@ -217,6 +217,12 @@ window.App = function App(){
     set_sq_resolution(data);
   }
 
+  const [data, set_data] = useState([])
+
+  const set_data_ = data => {
+    set_data(data)
+  }
+
   return (
     <div>
       <MapComponent 
@@ -231,6 +237,7 @@ window.App = function App(){
         gl_layer_enabled = { gl_layer_enabled }
         hex_resolution = { hex_resolution }
         sq_resolution = { sq_resolution }
+        set_data = { set_data_ }
       />
 
       <Controls 
@@ -266,6 +273,10 @@ window.App = function App(){
       <HistogramControls
         data={signals || []}
         signal_function={ signal_function }
+      />
+
+      <Wasserstein
+        data={data}
       />
     </div>
   );
