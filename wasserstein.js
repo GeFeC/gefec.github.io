@@ -71,6 +71,7 @@ window.Wasserstein = function Wasserstein({data}){
     set_allT(vals.filter(val => val.T > 0).map(val => val.T));
     set_allI(vals.filter(val => val.I > 0).map(val => val.I));
     set_allB(vals.filter(val => val.B > 0).map(val => val.B));
+
   }, [data])
 
   const getDist = (x) => {
@@ -109,6 +110,8 @@ window.Wasserstein = function Wasserstein({data}){
     set_result(result);
     set_duration((stop - start) / 1000);
   }
+
+
 
   return (
     <div style={{...style }} ref={windowRef}>

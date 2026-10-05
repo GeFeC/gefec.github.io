@@ -156,6 +156,10 @@ class HexagonMap{
       hex.t = [];
       hex.i = [];
       hex.b = [];
+    }
+
+    for (let hex_idx in hex_data){
+      const hex = hex_data[hex_idx];
 
       const neighbours_radius = Math.max(
         0, 
@@ -171,16 +175,19 @@ class HexagonMap{
 
         if (neighbour == null) return;
 
-        neighbour.t = [...neighbour.t, ...get_influence_series(hex.pois, hex.center_position, params)];
-        neighbour.i = [...neighbour.i, ...get_influence_series(hex.infs, hex.center_position, params)];
-        neighbour.b = [...neighbour.b, ...get_influence_series(hex.bgs, hex.center_position, params)];
+        neighbour.t = [...neighbour.t, ...get_influence_series(hex.pois, neighbour.center_position, params)];
+        neighbour.i = [...neighbour.i, ...get_influence_series(hex.infs, neighbour.center_position, params)];
+        neighbour.b = [...neighbour.b, ...get_influence_series(hex.bgs, neighbour.center_position, params)];
 
       })
+
     }
+
     const signals = {};
 
     for (let hex_idx in hex_data){
       const hex = hex_data[hex_idx];
+
 
       hex.T = get_accumulated_influence(hex.t);
       hex.I = get_accumulated_influence(hex.i);

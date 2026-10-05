@@ -14,6 +14,18 @@ function SquareIcon(){
   )
 }
 
+const get_max_s = res => {
+  if (res >= 100) return 3 * res;
+
+  switch (res){
+    case 6: return 7000;
+    case 7: return 3500;
+    case 8: return 2000;
+    case 9: return 1000;
+    case 10: return 500;
+  }
+}
+
 window.Controls = function Controls(props){
   const Checkbox = window.Checkbox;
   const Slider = window.Slider;
@@ -23,6 +35,7 @@ window.Controls = function Controls(props){
 
   const [inc_method, set_inc_method] = useState("mean")
   const [signal, set_signal] = useState("dit")
+  const [res, set_res] = useState(9);
 
   const { params } = props;
 
@@ -154,7 +167,10 @@ window.Controls = function Controls(props){
                 value={ 9 }
                 step={ 1 }
                 key="res-hex" 
-                on_change={ props.on_hex_res_change }
+                on_change={ e => {
+                  props.on_hex_res_change(e)
+                  set_res(e)
+                }  }
                 min={ 6 }
                 max={ 10 }
               />
@@ -164,7 +180,10 @@ window.Controls = function Controls(props){
                 value={ DEFAULT_CELL_SIZE_IN_METERS }
                 step={ 5 }
                 key="res-sq" 
-                on_change={ props.on_sq_res_change }
+                on_change={ e => {
+                  props.on_sq_res_change(e)
+                  set_res(e)
+                } }
                 min={ 100 }
                 max={ 2000 }
               />
@@ -334,10 +353,11 @@ window.Controls = function Controls(props){
         />
 
         <Slider 
+          key={`s${res}`}
           name="s"
           value={ params.s }
           min={ 0 }
-          max={ 1000 }
+          max={ get_max_s(res) }
           step={ 1 }
           on_change={ on_s_slider_change }
         />

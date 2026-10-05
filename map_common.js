@@ -35,3 +35,10 @@ const get_influence_series = (locations, cell_center_pos, params) => {
 
   return t
 }
+
+const cell_distance_to = (idx, pos) => {
+  const [lat, lon] = h3.cellToLatLng(idx);
+  const vec = get_move_vector([lat, lon], pos);
+
+  return Math.sqrt(vec[X] * vec[X] + vec[Y] * vec[Y]);
+}

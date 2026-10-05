@@ -50,10 +50,7 @@ class SquareMap{
   };
 
   update_grid(sq_data, params){
-    const starting_point = get_drawing_starting_point(this.sq_params);
-
     const { map_size } = this.sq_params;
-    const { square_size } = this.sq_params;
 
     for (let y = 0; y < map_size; ++y){
       for (let x = 0; x < map_size; ++x){
@@ -66,7 +63,6 @@ class SquareMap{
 
     for (let y = 0; y < map_size; ++y){
       for (let x = 0; x < map_size; ++x){
-        const center_pos = geo_move(starting_point, [x * square_size, y * square_size]);
         const cell = sq_data[x][y];
 
         const surrounding_cells = (() => {
@@ -91,9 +87,9 @@ class SquareMap{
 
         params.W_scale = 500 / this.sq_params.square_size;
         surrounding_cells.forEach(neighbour => {
-          neighbour.t = [...neighbour.t, ...get_influence_series(cell.pois, center_pos, params)];
-          neighbour.i = [...neighbour.i, ...get_influence_series(cell.infs, center_pos, params)];
-          neighbour.b = [...neighbour.b, ...get_influence_series(cell.bgs, center_pos, params)];
+          neighbour.t = [...neighbour.t, ...get_influence_series(cell.pois, neighbour.center_pos, params)];
+          neighbour.i = [...neighbour.i, ...get_influence_series(cell.infs, neighbour.center_pos, params)];
+          neighbour.b = [...neighbour.b, ...get_influence_series(cell.bgs, neighbour.center_pos, params)];
         })
       }
     }
@@ -152,6 +148,7 @@ class SquareMap{
         }).addTo(grid_group);
 
         data[x][y] = {
+          center_pos: center_pos,
           drawable: polygon,
           T: 0,
           I: 0,

@@ -19,7 +19,7 @@ window.App = function App(){
   const [current_map, set_current_map] = useState(HEX_MAP);
 
   const [params, set_params] = useState({
-    s: DEFAULT_CELL_SIZE_IN_METERS / 2,
+    s: 201,
     alpha: [0.5, 0.5],
     alpha0: 1,
     beta: 0.5,
@@ -211,10 +211,12 @@ window.App = function App(){
 
   const on_hex_res_change = data => {
     set_hex_resolution(data);
+    on_s_slider_change(Math.round(h3.getHexagonEdgeLengthAvg(data, 'm')))
   }
 
   const on_sq_res_change = data => {
     set_sq_resolution(data);
+    on_s_slider_change(data / 2)
   }
 
   const [data, set_data] = useState([])

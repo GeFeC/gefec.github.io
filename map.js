@@ -212,7 +212,11 @@ window.MapComponent = function MapComponent(props){
 
     if (current_map_ref.current == hexagon_map){
       params.resolution = hex_resolution;
-      params.radius = Math.ceil(bounding_circle.radiusMeters / h3.getHexagonEdgeLengthAvg(params.resolution, 'm') / Math.sqrt(3));
+      params.radius = Math.ceil(
+        bounding_circle.radiusMeters 
+          / 
+        h3.getHexagonEdgeLengthAvg(params.resolution, 'm') * 2 / 3);
+
     }
     else{
       params.square_size = sq_resolution;
@@ -220,7 +224,11 @@ window.MapComponent = function MapComponent(props){
 
     }
 
-    data_ref.current = current_map_ref.current.init(grid_group_ref.current, static_canvas_ref.current, params);
+    data_ref.current = current_map_ref.current.init(
+      grid_group_ref.current, 
+      static_canvas_ref.current, 
+      params
+    );
     
     current_map_ref.current.load(
       data_ref.current, 
