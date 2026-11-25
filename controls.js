@@ -143,6 +143,26 @@ window.Controls = function Controls(props){
     return () => interactable.unset();
   }, []);
 
+  const handle_csv_download = () => {
+    const type = signal.toUpperCase();
+
+    const content = 
+    `Rozdzielczość: ${res};${type}\n` +
+    Object.entries(hexagon_map.signals)
+      .map(([hex_idx, signal]) => `${hex_idx};${signal}`)
+      .join('\n');
+
+    const url = URL.createObjectURL(new Blob([content], {type: 'text/plain'}))
+    const a = document.createElement("a");
+
+
+    a.href = url;
+    a.download = `${type} ${res}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+  }
+
   return (
     <div style={style} ref={windowRef}>
       <div>
@@ -419,6 +439,11 @@ window.Controls = function Controls(props){
             on_change={ on_opacity_slider_change }
           />
         </span>
+
+        <hr/>
+
+        <h3 style={h_style}>Pobierz CSV</h3>
+        <button onClick={handle_csv_download}>Pobierz</button>
       </div>
     </div>
   )

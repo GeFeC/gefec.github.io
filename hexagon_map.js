@@ -146,10 +146,12 @@ const draw_line = (group, p1, p2, color) => {
 }
 
 class HexagonMap{
+  signals = [];
   h3_params = {};
   get_data_as_1d_array(data){
     return [...Object.values(data)]
   };
+
   update_grid(hex_data, params, map, visible){
     for (let hex_idx in hex_data){
       const hex = hex_data[hex_idx];
@@ -183,29 +185,28 @@ class HexagonMap{
 
     }
 
-    const signals = {};
+    this.signals = {};
 
     for (let hex_idx in hex_data){
       const hex = hex_data[hex_idx];
-
 
       hex.T = get_accumulated_influence(hex.t);
       hex.I = get_accumulated_influence(hex.i);
       hex.B = get_accumulated_influence(hex.b);
 
-      signals[hex_idx] = get_signal(hex, params);
+      this.signals[hex_idx] = get_signal(hex, params);
     }
 
-    const max_signal = Math.max(...Object.values(signals))
+    const max_signal = Math.max(...Object.values(this.signals))
 
     for (let hex_idx in hex_data){
       const hex = hex_data[hex_idx];
 
       if (params.use_log_compression){
-        signals[hex_idx] = log_compression(signals[hex_idx], max_signal);
+        this.signals[hex_idx] = log_compression(this.signals[hex_idx], max_signal);
       }
 
-      const signal = signals[hex_idx];
+      const signal = this.signals[hex_idx];
       hex.drawable.setStyle({
         fillColor: map_to_color(signal)
       }).bindPopup(`${hex_idx} Sygnał: ${signal}`);
@@ -266,6 +267,7 @@ class HexagonMap{
 
     return gouraudLayer;
   };
+
   load(hex_data, poi, inf, bg){
     const { resolution } = this.h3_params;
 
